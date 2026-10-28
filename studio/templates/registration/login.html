@@ -1,6 +1,23 @@
 {% extends "studio/base.html" %}
 {% block title %}Log in · {{ studio.studio_name }}{% endblock %}
 {% block content %}
+{% if demo_mode %}
+<div class="login" style="max-width:560px">
+  <h1>{{ studio.studio_name }} — demo</h1>
+  <p class="muted">This is a working prototype with made-up trainers and clients. Pick who you want to be; nothing you do here is real, and the demo resets itself regularly.</p>
+  {% for role, name, email, what in demo_accounts %}
+  <form method="post" class="item">
+    {% csrf_token %}
+    <input type="hidden" name="username" value="{{ email }}">
+    <input type="hidden" name="password" value="{{ demo_password }}">
+    <input type="hidden" name="next" value="{{ next }}">
+    <div><div class="when">{{ name }} <span class="tag">{{ role }}</span></div><div class="meta">{{ what }}</div></div>
+    <button class="btn small">Log in as {{ name.split.0 }}</button>
+  </form>
+  {% endfor %}
+  <p class="small muted">Tip: try the client pages on your phone. Online payments are switched off in this demo.</p>
+</div>
+{% else %}
 <div class="login card">
   <h1>Log in</h1>
   {% if form.errors %}<div class="msg error">That email and password didn't match.</div>{% endif %}
@@ -15,4 +32,5 @@
   </form>
   <p class="muted small">Demo logins are listed in the README.</p>
 </div>
+{% endif %}
 {% endblock %}

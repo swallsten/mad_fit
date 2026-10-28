@@ -24,6 +24,26 @@ To run the tests:
 .venv/bin/pytest
 ```
 
+## Online demo (no install)
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/swallsten/mad_fit)
+
+The repo includes a [`render.yaml`](render.yaml) that runs a free public demo on [Render](https://render.com):
+
+1. Create a free Render account. Signing up with GitHub is easiest.
+2. Click the **Deploy to Render** button above. If Render asks, let it access the `mad_fit` repo.
+3. Click **Deploy Blueprint**. The first build takes about 3–5 minutes. When it finishes, Render shows the site's address, something like `https://mad-fitness-demo.onrender.com`.
+
+Send that link to reviewers. The login page shows one-click buttons ("Log in as Jordan", "Log in as Emily", and so on), so nobody has to type an email or password.
+
+How the free demo behaves:
+- **It sleeps when idle.** After about 15 minutes without visitors it goes to sleep. The next visitor waits about a minute while it wakes up.
+- **It resets itself.** Each time it wakes, it reloads fresh demo data dated from that day. Anything a reviewer changed is wiped, which keeps the demo clean.
+- **Online payments are off.** The Buy buttons are disabled. Adding a Stripe test key in Render's *Environment* tab turns them on.
+- **Updates are automatic.** Pushing changes to `main` redeploys the site.
+
+`DEMO_MODE=1` (set in `render.yaml`) is what shows the one-click logins and the demo password. Never turn it on for a site with real client data.
+
 ## Logging in
 
 Every demo account uses the password **`demo1234`**.

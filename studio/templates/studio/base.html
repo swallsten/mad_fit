@@ -33,7 +33,7 @@
   </nav>
   <div class="who">
     {{ u }} · {{ u.get_role_display }}
-    <form method="post" action="{% url 'logout' %}" class="inline">{% csrf_token %}<button>Log out</button></form>
+    <form method="post" action="{% url 'logout' %}" class="inline">{% csrf_token %}<button>{% if demo_mode %}Switch user{% else %}Log out{% endif %}</button></form>
   </div>
   {% endif %}
 </header>

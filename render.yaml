@@ -1,0 +1,24 @@
+# Render blueprint for the public demo (free plan).
+# The demo uses SQLite on the instance's temporary disk and re-seeds on every
+# start, so it resets itself whenever Render restarts or wakes the service.
+# A real deployment would add a Render Postgres database instead.
+services:
+  - type: web
+    name: mad-fitness-demo
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
+    startCommand: >-
+      python manage.py migrate --noinput &&
+      python manage.py seed --reset &&
+      gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 2
+    healthCheckPath: /login/
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.4
+      - key: DJANGO_DEBUG
+        value: "0"
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DEMO_MODE
+        value: "1"

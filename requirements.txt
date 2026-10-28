@@ -1,7 +1,10 @@
 asgiref==3.13.0
 Django==5.2.18
-pytest==9.2.0
+gunicorn==26.2.0
+packaging==26.3
 pytest-django==4.14.0
+pytest==9.2.0
 python-dotenv==1.2.4
 sqlparse==0.6.0
 stripe==16.0.1
+whitenoise==6.12.0

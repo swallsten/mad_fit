@@ -131,3 +131,17 @@ def test_seed_has_required_scenarios(seeded):
     assert balances(dana)["pt60"]["expired"] == 3 and balances(dana)["pt60"]["credits"] == 0
     assert ClientProfile.objects.get(user__username="marcus.bell@example.com").is_payment_flagged
     assert Booking.objects.filter(status="waitlisted").count() == 2
+
+
+def test_demo_mode_login_page(seeded, client, settings):
+    settings.DEMO_MODE = False
+    resp = client.get(reverse("login"))
+    assert b"Log in as" not in resp.content and b"demo1234" not in resp.content
+    settings.DEMO_MODE = True
+    resp = client.get(reverse("login"))
+    assert resp.content.count(b"Log in as") == 6
+    # every one-click account really exists and logs in
+    for _, _, email, _ in resp.context["demo_accounts"]:
+        c = client.__class__()
+        r = c.post(reverse("login"), {"username": email, "password": resp.context["demo_password"]})
+        assert r.status_code == 302, email
