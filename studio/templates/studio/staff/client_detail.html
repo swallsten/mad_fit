@@ -1,0 +1,100 @@
+{% extends "studio/base.html" %}
+{% block content %}
+{% with admin=request.user.is_studio_admin %}
+<p><a href="{% url 'clients' %}">← Clients</a></p>
+<div class="row between">
+  <h1>{{ client }}</h1>
+  <div class="row">
+    <a class="btn small" href="{% url 'staff_book' %}?client={{ client.pk }}">Book 1:1</a>
+  </div>
+</div>
+<p class="muted">{{ client.user.email }}{% if client.user.phone %} · {{ client.user.phone }}{% endif %} · Primary trainer: {{ client.primary_trainer|default:"none" }}</p>
+
+{% if client.is_payment_flagged %}
+<div class="banner-bad">
+  <strong>Payment failed</strong> {{ client.payment_flagged_at|date:"M j" }} — {{ client.payment_flag_reason }} New bookings are blocked.
+  {% if admin %}
+  <form method="post" action="{% url 'client_flag' client.pk %}" style="margin-top:.5rem">{% csrf_token %}<input type="hidden" name="action" value="clear"><button class="btn small secondary">Mark resolved</button></form>
+  {% endif %}
+</div>
+{% endif %}
+
+<div class="cards">
+  {% for b in balances %}
+  <div class="stat {% if b.expired and not b.credits %}bad{% endif %}">
+    <div class="n">{% if b.unlimited %}∞{% else %}{{ b.credits }}{% endif %}</div>
+    <div class="l">{{ b.label }}</div>
+    {% if b.expired %}<div class="small" style="color:var(--bad)">{{ b.expired }} expired</div>{% endif %}
+  </div>
+  {% endfor %}
+</div>
+
+<div class="two-col">
+<div>
+  <h2>Upcoming</h2>
+  {% for b in upcoming %}
+  <div class="item">
+    <div><div class="when">{{ b.event.start|date:"D M j, g:i A" }}</div><div class="meta">{{ b.event.title }} · {{ b.event.trainer }}{% if b.status == 'waitlisted' %} · <span class="tag warn">waitlist</span>{% endif %}</div></div>
+    <div class="row"><a class="btn small secondary" href="{% url 'event_detail' b.event_id %}">Open</a><a class="btn small secondary" href="{% url 'booking_cancel' b.pk %}">Cancel</a></div>
+  </div>
+  {% empty %}<p class="muted">Nothing booked.</p>{% endfor %}
+
+  <h2>Past</h2>
+  <div class="table-wrap"><table>
+    {% for b in past %}
+    <tr><td class="small">{{ b.event.start|date:"M j g:i A" }}</td><td class="small">{{ b.event.title }} · {{ b.event.trainer }}</td>
+      <td><span class="tag {% if b.status == 'late_cancel' or b.status == 'no_show' %}bad{% elif b.status == 'attended' %}ok{% endif %}">{{ b.get_status_display }}</span></td></tr>
+    {% empty %}<tr><td class="muted">None.</td></tr>{% endfor %}
+  </table></div>
+</div>
+
+<div>
+  <h2>Packages</h2>
+  <div class="table-wrap"><table>
+    <tr><th>Package</th><th class="num">Left</th><th>Expires</th><th>Source</th></tr>
+    {% for p in packages %}
+    <tr><td>{{ p.name }}</td><td class="num">{{ p.credits_remaining }}/{{ p.credits_total }}</td>
+      <td>{% if p.expires_at %}{{ p.expires_at|date:"M j, Y" }}{% if p.expires_at < now %} <span class="tag bad">expired</span>{% endif %}{% else %}—{% endif %}</td>
+      <td class="small">{{ p.get_source_display }}</td></tr>
+    {% empty %}<tr><td colspan="4" class="muted">None.</td></tr>{% endfor %}
+  </table></div>
+
+  <h2>Memberships</h2>
+  {% for m in memberships %}
+  <div class="item"><div><div class="when">{{ m.product.name }}</div><div class="meta">since {{ m.started_at|date:"M j, Y" }}{% if m.current_period_end %} · paid through {{ m.current_period_end|date:"M j" }}{% endif %}</div></div>
+    <span class="tag {% if m.status == 'active' %}ok{% elif m.status == 'past_due' %}bad{% endif %}">{{ m.get_status_display }}</span></div>
+  {% empty %}<p class="muted">None.</p>{% endfor %}
+
+  {% if admin %}
+  <h2>Record an in-studio sale / comp</h2>
+  <form method="post" action="{% url 'client_grant' client.pk %}" class="card">{% csrf_token %}
+    <div class="form-grid">{{ grant_form.as_div }}</div>
+    <p><button class="btn small">Add package</button></p>
+  </form>
+
+  <h2>Adjust credits</h2>
+  <form method="post" action="{% url 'client_adjust' client.pk %}" class="card">{% csrf_token %}
+    <div class="form-grid">{{ adjust_form.as_div }}</div>
+    <p><button class="btn small secondary">Apply adjustment</button></p>
+  </form>
+
+  {% if not client.is_payment_flagged %}
+  <form method="post" action="{% url 'client_flag' client.pk %}" class="row">{% csrf_token %}
+    <input name="reason" placeholder="Reason (e.g. card declined at front desk)" style="max-width:320px">
+    <button class="btn small danger">Flag payment problem</button>
+  </form>
+  {% endif %}
+  {% endif %}
+
+  <h2>Credit ledger</h2>
+  <div class="table-wrap"><table>
+    <tr><th>Date</th><th class="num">±</th><th>Package</th><th>Reason</th></tr>
+    {% for t in ledger %}
+    <tr><td class="small">{{ t.created_at|date:"M j" }}</td><td class="num">{% if t.delta > 0 %}+{% endif %}{{ t.delta }}</td><td class="small">{{ t.package.name }}</td>
+      <td class="small">{{ t.get_reason_display }}{% if t.booking %} ({{ t.booking.event.start|date:"M j" }}){% endif %}{% if t.note %} · {{ t.note }}{% endif %}{% if t.created_by %} · {{ t.created_by }}{% endif %}</td></tr>
+    {% empty %}<tr><td colspan="4" class="muted">No activity.</td></tr>{% endfor %}
+  </table></div>
+</div>
+</div>
+{% endwith %}
+{% endblock %}

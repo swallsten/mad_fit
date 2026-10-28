@@ -1,0 +1,20 @@
+{% extends "studio/base.html" %}
+{% block content %}
+<h1>Products</h1>
+<p class="muted">Packages, memberships, drop-ins and intro offers. Edit them in the <a href="{% url 'admin:studio_product_changelist' %}">database admin</a>.
+  {% if stripe_enabled %}Stripe prices are created automatically the first time each product is bought.{% else %}<span class="tag warn">Stripe not connected</span>{% endif %}</p>
+<div class="table-wrap"><table>
+  <tr><th>Name</th><th>Type</th><th>Credits</th><th class="num">Price</th><th>Expires</th><th>Stripe price</th><th></th></tr>
+  {% for p in products %}
+  <tr class="{% if not p.active %}muted{% endif %}">
+    <td><strong>{{ p.name }}</strong><div class="small muted">{{ p.description }}</div></td>
+    <td>{{ p.get_kind_display }}</td>
+    <td>{% if p.is_unlimited %}Unlimited{% else %}{{ p.credits }}{% endif %} × {{ p.get_credit_type_display }}{% if p.is_recurring and not p.is_unlimited %} / month{% endif %}</td>
+    <td class="num">{{ p.price_display }}</td>
+    <td>{% if p.expires_days %}{{ p.expires_days }} days{% else %}—{% endif %}</td>
+    <td class="small muted">{{ p.stripe_price_id|default:"—" }}</td>
+    <td>{% if p.one_per_client %}<span class="tag">once per client</span>{% endif %}{% if not p.active %}<span class="tag">inactive</span>{% endif %}</td>
+  </tr>
+  {% endfor %}
+</table></div>
+{% endblock %}

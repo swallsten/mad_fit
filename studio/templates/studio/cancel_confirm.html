@@ -1,0 +1,29 @@
+{% extends "studio/base.html" %}
+{% block main_class %}narrow{% endblock %}
+{% block content %}
+{% with ev=booking.event %}
+<h1>{% if booking.status == 'waitlisted' %}Leave waitlist{% else %}Cancel booking{% endif %}</h1>
+<div class="card stack">
+  <div><strong>{{ ev.title }}</strong> with {{ ev.trainer }}</div>
+  <div>{{ ev.start|date:"l, F j" }} at {{ ev.start|date:"g:i A" }}</div>
+  {% if staff %}<div>Client: {{ booking.client }}</div>{% endif %}
+  {% if booking.status == 'booked' %}
+    {% if late %}
+    <div class="msg warning">This is inside the {{ studio.late_cancel_hours }}-hour cancellation window. {% if staff %}The client's credit will be used unless you waive it.{% else %}Your credit will be used.{% endif %}</div>
+    {% else %}
+    <div class="msg success">{% if staff %}The client's{% else %}Your{% endif %} credit will be returned.</div>
+    {% endif %}
+  {% endif %}
+</div>
+<form method="post">
+  {% csrf_token %}
+  {% if staff and late and booking.status == 'booked' %}
+  <label><input type="checkbox" name="waive" value="1"> Waive the late-cancel charge (refund the credit)</label>
+  {% endif %}
+  <div class="row" style="margin-top:.75rem">
+    <button class="btn danger">{% if booking.status == 'waitlisted' %}Leave waitlist{% else %}Cancel booking{% endif %}</button>
+    <a class="btn secondary" href="{{ back }}">Keep it</a>
+  </div>
+</form>
+{% endwith %}
+{% endblock %}

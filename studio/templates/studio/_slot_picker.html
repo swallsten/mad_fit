@@ -1,0 +1,36 @@
+{# Shared 1:1 slot picker. Needs: duration, durations, trainers, trainer, days, day, slots, base_qs, confirm_url #}
+<h3>Session length</h3>
+<div class="chips">
+  {% for d, label in durations %}
+  <a class="chip {% if d == duration %}on{% endif %}" href="?{{ base_qs }}duration={{ d }}{% if trainer %}&trainer={{ trainer.pk }}{% endif %}&date={{ day|date:'Y-m-d' }}">{{ label }}</a>
+  {% endfor %}
+</div>
+
+<h3>Trainer</h3>
+<div class="chips">
+  {% for t in trainers %}
+  <a class="chip {% if t == trainer %}on{% endif %}" href="?{{ base_qs }}duration={{ duration }}&trainer={{ t.pk }}&date={{ day|date:'Y-m-d' }}">{{ t }}</a>
+  {% endfor %}
+</div>
+
+{% if trainer %}
+<h3>Day</h3>
+<div class="chips">
+  {% for d in days %}
+  <a class="chip day-chip {% if d == day %}on{% endif %}" href="?{{ base_qs }}duration={{ duration }}&trainer={{ trainer.pk }}&date={{ d|date:'Y-m-d' }}"><b>{{ d|date:"D" }}</b>{{ d|date:"M j" }}</a>
+  {% endfor %}
+</div>
+
+<h3>Open times · {{ day|date:"l, F j" }}</h3>
+{% if slots %}
+<div class="slots">
+  {% for s in slots %}
+  <a href="{{ confirm_url }}?{{ base_qs }}trainer={{ trainer.pk }}&duration={{ duration }}&start={{ s|date:'c'|urlencode }}">{{ s|date:"g:i A" }}</a>
+  {% endfor %}
+</div>
+{% else %}
+<p class="muted">No open {{ duration }}-minute times with {{ trainer }} this day. Try another day.</p>
+{% endif %}
+{% else %}
+<p class="muted">Choose a trainer to see open times.</p>
+{% endif %}

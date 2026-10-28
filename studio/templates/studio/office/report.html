@@ -1,0 +1,31 @@
+{% extends "studio/base.html" %}
+{% block content %}
+<h1>Trainer report</h1>
+<form method="get" class="row" style="margin-bottom:.75rem">
+  <label style="margin:0">From</label> {{ form.start }}
+  <label style="margin:0">To</label> {{ form.end }}
+  <button class="btn small">Run</button>
+  <a class="btn small secondary" href="?start={{ start|date:'Y-m-d' }}&end={{ end|date:'Y-m-d' }}&format=csv">Download CSV</a>
+</form>
+{{ form.non_field_errors }}
+<p class="muted small">{{ start|date:"M j, Y" }} – {{ end|date:"M j, Y" }}. Delivered = marked attended, or still booked after the session ended. Late cancels and no-shows are counted separately so you decide how to pay them.</p>
+<div class="table-wrap"><table>
+  <tr>{% for key, label in columns %}<th class="{% if key != 'trainer' %}num{% endif %}">{{ label }}</th>{% endfor %}</tr>
+  {% for r in rows %}
+  <tr>
+    <td><strong>{{ r.trainer }}</strong></td>
+    <td class="num">{{ r.sessions_30 }}</td><td class="num">{{ r.sessions_60 }}</td><td class="num">{{ r.session_hours|floatformat:1 }}</td>
+    <td class="num">{{ r.group_sessions }}</td><td class="num">{{ r.group_clients }}</td>
+    <td class="num">{{ r.classes }}</td><td class="num">{{ r.class_attendees }}</td>
+    <td class="num">{{ r.late_cancels }}</td><td class="num">{{ r.no_shows }}</td>
+  </tr>
+  {% endfor %}
+  <tr class="total">
+    <td>Total</td>
+    <td class="num">{{ totals.sessions_30 }}</td><td class="num">{{ totals.sessions_60 }}</td><td class="num">{{ totals.session_hours|floatformat:1 }}</td>
+    <td class="num">{{ totals.group_sessions }}</td><td class="num">{{ totals.group_clients }}</td>
+    <td class="num">{{ totals.classes }}</td><td class="num">{{ totals.class_attendees }}</td>
+    <td class="num">{{ totals.late_cancels }}</td><td class="num">{{ totals.no_shows }}</td>
+  </tr>
+</table></div>
+{% endblock %}

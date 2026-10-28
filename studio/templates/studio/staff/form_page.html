@@ -1,0 +1,12 @@
+{% extends "studio/base.html" %}
+{% block main_class %}narrow{% endblock %}
+{% block content %}
+<h1>{{ title }}</h1>
+<form method="post" class="card">
+  {% csrf_token %}
+  {{ form.non_field_errors }}
+  {{ form.as_div }}
+  <p><button class="btn">{{ submit }}</button></p>
+</form>
+{% if tz %}<p class="small muted">Studio time zone: {{ tz }} (set STUDIO_TIMEZONE in .env to change).</p>{% endif %}
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "studio/base.html" %}
+{% block content %}
+<h1>{% if request.user.is_studio_admin %}Clients{% else %}My clients{% endif %} <span class="muted small">({{ rows|length }})</span></h1>
+<form class="row" method="get" style="margin-bottom:.6rem">
+  <input name="q" value="{{ q }}" placeholder="Search name or email" style="max-width:260px">
+  <input type="hidden" name="filter" value="{{ filter }}">
+  <button class="btn small secondary">Search</button>
+  <span class="chips" style="margin:0;padding:0">
+    <a class="chip {% if not filter %}on{% endif %}" href="?q={{ q }}">All</a>
+    <a class="chip {% if filter == 'flagged' %}on{% endif %}" href="?q={{ q }}&filter=flagged">Payment failed</a>
+    <a class="chip {% if filter == 'expired' %}on{% endif %}" href="?q={{ q }}&filter=expired">Has expired credits</a>
+    <a class="chip {% if filter == 'empty' %}on{% endif %}" href="?q={{ q }}&filter=empty">No credits</a>
+  </span>
+</form>
+<div class="table-wrap"><table>
+  <tr>
+    <th>Client</th><th>Primary trainer</th>
+    <th class="num">60-min</th><th class="num">30-min</th><th class="num">Small grp</th><th class="num">Class</th>
+    <th>Membership</th><th>Payment</th><th class="num">Upcoming</th>
+  </tr>
+  {% for r in rows %}
+  {% with c=r.client b=r.bal %}
+  <tr class="{% if c.is_payment_flagged %}flagged{% endif %}">
+    <td><a href="{% url 'client_detail' c.pk %}"><strong>{{ c }}</strong></a><div class="small muted">{{ c.user.email }}</div></td>
+    <td>{{ c.primary_trainer|default:"—" }}</td>
+    <td class="num">{% if b.pt60.unlimited %}∞{% else %}{{ b.pt60.credits }}{% endif %}{% if b.pt60.expired %} <span class="tag bad" title="expired credits">{{ b.pt60.expired }} exp</span>{% endif %}</td>
+    <td class="num">{% if b.pt30.unlimited %}∞{% else %}{{ b.pt30.credits }}{% endif %}{% if b.pt30.expired %} <span class="tag bad">{{ b.pt30.expired }} exp</span>{% endif %}</td>
+    <td class="num">{% if b.group.unlimited %}∞{% else %}{{ b.group.credits }}{% endif %}{% if b.group.expired %} <span class="tag bad">{{ b.group.expired }} exp</span>{% endif %}</td>
+    <td class="num">{% if b.class.unlimited %}∞{% else %}{{ b.class.credits }}{% endif %}{% if b.class.expired %} <span class="tag bad">{{ b.class.expired }} exp</span>{% endif %}</td>
+    <td>{% for m in r.memberships %}<div class="small">{{ m.product.name }}{% if m.status == 'past_due' %} <span class="tag bad">past due</span>{% endif %}</div>{% empty %}<span class="muted">—</span>{% endfor %}</td>
+    <td>{% if c.is_payment_flagged %}<span class="tag bad">Failed</span>{% else %}<span class="tag ok">OK</span>{% endif %}</td>
+    <td class="num">{{ r.upcoming }}</td>
+  </tr>
+  {% endwith %}
+  {% empty %}
+  <tr><td colspan="9" class="muted">No clients match.</td></tr>
+  {% endfor %}
+</table></div>
+{% endblock %}

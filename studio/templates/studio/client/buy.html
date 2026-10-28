@@ -1,0 +1,27 @@
+{% extends "studio/base.html" %}
+{% block main_class %}narrow{% endblock %}
+{% block content %}
+<h1>Buy sessions &amp; memberships</h1>
+{% if not stripe_enabled %}
+<div class="msg warning">Online payments aren't connected yet (no Stripe test key). See the README to add one.</div>
+{% endif %}
+{% for kind, products in groups %}
+<h2>{{ kind }}s</h2>
+{% for p in products %}
+<div class="item">
+  <div>
+    <div class="when">{{ p.name }} — {{ p.price_display }}</div>
+    <div class="meta">{{ p.description }}{% if p.expires_days %} · credits expire after {{ p.expires_days }} days{% endif %}</div>
+  </div>
+  {% if p.already_member %}
+    <span class="tag ok">You have this</span>
+  {% else %}
+  <form method="post" action="{% url 'client_buy_product' p.pk %}">{% csrf_token %}
+    <button class="btn small" {% if not stripe_enabled %}disabled{% endif %}>{% if p.is_recurring %}Subscribe{% else %}Buy{% endif %}</button>
+  </form>
+  {% endif %}
+</div>
+{% endfor %}
+{% endfor %}
+<p class="small muted">Payments are processed by Stripe. Test mode: use card 4242 4242 4242 4242, any future date, any CVC.</p>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "studio/base.html" %}
+{% block title %}Log in · {{ studio.studio_name }}{% endblock %}
+{% block content %}
+<div class="login card">
+  <h1>Log in</h1>
+  {% if form.errors %}<div class="msg error">That email and password didn't match.</div>{% endif %}
+  <form method="post">
+    {% csrf_token %}
+    <label for="id_username">Email</label>
+    <input type="text" name="username" id="id_username" autocomplete="username" autofocus required>
+    <label for="id_password">Password</label>
+    <input type="password" name="password" id="id_password" autocomplete="current-password" required>
+    <input type="hidden" name="next" value="{{ next }}">
+    <p><button class="btn block">Log in</button></p>
+  </form>
+  <p class="muted small">Demo logins are listed in the README.</p>
+</div>
+{% endblock %}

@@ -1,0 +1,46 @@
+{% load static %}<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ studio.studio_name }}{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'studio/style.css' %}">
+</head>
+<body>
+{% with u=request.user name=request.resolver_match.url_name %}
+<header class="topbar">
+  <a class="brand" href="{% url 'home' %}">{{ studio.studio_name }}</a>
+  {% if u.is_authenticated %}
+  <nav>
+    {% if u.is_client %}
+      <a href="{% url 'client_dashboard' %}" class="{% if name == 'client_dashboard' %}on{% endif %}">Home</a>
+      <a href="{% url 'client_book' %}" class="{% if name == 'client_book' or name == 'client_book_confirm' %}on{% endif %}">Book a session</a>
+      <a href="{% url 'client_classes' %}" class="{% if name == 'client_classes' %}on{% endif %}">Classes</a>
+      <a href="{% url 'client_buy' %}" class="{% if name == 'client_buy' %}on{% endif %}">Buy</a>
+      <a href="{% url 'client_history' %}" class="{% if name == 'client_history' %}on{% endif %}">History</a>
+    {% else %}
+      <a href="{% url 'schedule' %}" class="{% if name == 'schedule' %}on{% endif %}">{% if u.is_studio_admin %}Calendar{% else %}My schedule{% endif %}</a>
+      <a href="{% url 'clients' %}" class="{% if name == 'clients' or name == 'client_detail' %}on{% endif %}">{% if u.is_studio_admin %}Clients{% else %}My clients{% endif %}</a>
+      <a href="{% url 'staff_book' %}" class="{% if name == 'staff_book' %}on{% endif %}">Book session</a>
+      <a href="{% url 'availability' %}" class="{% if name == 'availability' %}on{% endif %}">Availability</a>
+      {% if u.is_studio_admin %}
+        <a href="{% url 'office_classes' %}" class="{% if name == 'office_classes' %}on{% endif %}">Classes</a>
+        <a href="{% url 'office_report' %}" class="{% if name == 'office_report' %}on{% endif %}">Trainer report</a>
+        <a href="{% url 'office_products' %}" class="{% if name == 'office_products' %}on{% endif %}">Products</a>
+        <a href="{% url 'office_settings' %}" class="{% if name == 'office_settings' %}on{% endif %}">Settings</a>
+      {% endif %}
+    {% endif %}
+  </nav>
+  <div class="who">
+    {{ u }} · {{ u.get_role_display }}
+    <form method="post" action="{% url 'logout' %}" class="inline">{% csrf_token %}<button>Log out</button></form>
+  </div>
+  {% endif %}
+</header>
+{% endwith %}
+<main class="{% block main_class %}{% endblock %}">
+  {% for m in messages %}<div class="msg {{ m.tags }}">{{ m }}</div>{% endfor %}
+  {% block content %}{% endblock %}
+</main>
+</body>
+</html>

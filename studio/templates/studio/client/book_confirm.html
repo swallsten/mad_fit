@@ -1,0 +1,24 @@
+{% extends "studio/base.html" %}
+{% block main_class %}narrow{% endblock %}
+{% block content %}
+<h1>Confirm booking</h1>
+<div class="card stack">
+  <div><strong>{{ duration }}-minute session</strong> with {{ trainer }}</div>
+  <div>{{ start|date:"l, F j" }} at {{ start|date:"g:i A" }}</div>
+  <div class="muted">
+    {% if membership %}Covered by your {{ membership.product.name }} membership.
+    {% elif package %}Uses 1 credit from <strong>{{ package.name }}</strong> ({{ package.credits_remaining }} left{% if package.expires_at %}, expires {{ package.expires_at|date:"M j" }}{% endif %}).
+    {% else %}<span style="color:var(--bad)">You don't have a valid credit for this session.</span> <a href="{% url 'client_buy' %}">Buy a package</a>.
+    {% endif %}
+  </div>
+  <div class="small muted">Cancel at least {{ late_hours }} hours ahead to get your credit back. Late cancels and no-shows use the credit.</div>
+</div>
+<form method="post">
+  {% csrf_token %}
+  <input type="hidden" name="trainer" value="{{ trainer.pk }}">
+  <input type="hidden" name="duration" value="{{ duration }}">
+  <input type="hidden" name="start" value="{{ start|date:'c' }}">
+  <button class="btn block" {% if not membership and not package %}disabled{% endif %}>Book it</button>
+</form>
+<p><a href="{% url 'client_book' %}?duration={{ duration }}&trainer={{ trainer.pk }}&date={{ start|date:'Y-m-d' }}">← Pick another time</a></p>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends "studio/base.html" %}
+{% block main_class %}narrow{% endblock %}
+{% block content %}
+<div class="row between"><h1>Classes &amp; small groups</h1></div>
+<p class="muted small">
+  Class credits: {% if balances.class.unlimited %}unlimited (membership){% else %}{{ balances.class.credits }}{% endif %}
+  · Small-group credits: {% if balances.group.unlimited %}unlimited{% else %}{{ balances.group.credits }}{% endif %}
+</p>
+<div class="chips">
+  {% for w in "0123" %}
+  <a class="chip {% if w|add:0 == week %}on{% endif %}" href="?week={{ w }}">{% if w == "0" %}This week{% elif w == "1" %}Next week{% else %}In {{ w }} weeks{% endif %}</a>
+  {% endfor %}
+</div>
+
+{% for day, events in days %}
+<h3>{{ day|date:"l, F j" }}</h3>
+{% for ev in events %}
+<div class="item">
+  <div>
+    <div class="when">{{ ev.start|date:"g:i A" }} · {{ ev.title }}</div>
+    <div class="meta">{{ ev.trainer }} · {{ ev.duration_minutes }} min · {% if ev.kind == 'group' %}small group · {% endif %}
+      {% if ev.is_full %}<span class="tag warn">Full</span>{% else %}{{ ev.capacity|add:0 }} spots, {{ ev.n_booked }} taken{% endif %}
+    </div>
+  </div>
+  <div>
+    {% if ev.my_booking.status == 'booked' %}
+      <span class="tag ok">Booked</span> <a class="small" href="{% url 'booking_cancel' ev.my_booking.pk %}">cancel</a>
+    {% elif ev.my_booking.status == 'waitlisted' %}
+      <span class="tag warn">Waitlist #{{ ev.my_position }}</span> <a class="small" href="{% url 'booking_cancel' ev.my_booking.pk %}">leave</a>
+    {% else %}
+      <form method="post" action="{% url 'client_class_join' ev.pk %}">
+        {% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
+        {% if ev.is_full %}<button class="btn secondary small" name="waitlist" value="1">Join waitlist</button>
+        {% else %}<button class="btn small">Book</button>{% endif %}
+      </form>
+    {% endif %}
+  </div>
+</div>
+{% endfor %}
+{% empty %}
+<p class="muted">No classes scheduled this week.</p>
+{% endfor %}
+<p class="small muted">If you're on the waitlist and a spot opens more than {{ studio.waitlist_cutoff_hours }} hours before class, you're booked automatically and a credit is used.</p>
+{% endblock %}

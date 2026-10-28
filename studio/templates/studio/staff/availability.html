@@ -1,0 +1,36 @@
+{% extends "studio/base.html" %}
+{% block content %}
+<h1>Availability · {{ trainer }}</h1>
+{% if trainers %}
+<div class="chips">{% for t in trainers %}<a class="chip {% if t == trainer %}on{% endif %}" href="?trainer={{ t.pk }}">{{ t }}</a>{% endfor %}</div>
+{% endif %}
+<div class="two-col">
+<div>
+  <h2>Weekly hours for 1:1 bookings</h2>
+  <div class="table-wrap"><table>
+    {% for w in windows %}
+    <tr><td><strong>{{ w.get_weekday_display }}</strong></td><td>{{ w.start_time|time:"g:i A" }} – {{ w.end_time|time:"g:i A" }}</td>
+      <td class="num"><form method="post" action="{% url 'availability_delete' w.pk %}" class="inline">{% csrf_token %}<button class="btn small secondary">Remove</button></form></td></tr>
+    {% empty %}<tr><td class="muted">No weekly hours set — clients can't self-book this trainer.</td></tr>{% endfor %}
+  </table></div>
+  <form method="post" class="card" style="margin-top:.6rem">{% csrf_token %}
+    <div class="form-grid">{{ avail_form.as_div }}</div>
+    <p><button class="btn small" name="add_availability" value="1">Add hours</button></p>
+  </form>
+</div>
+<div>
+  <h2>Time off</h2>
+  <div class="table-wrap"><table>
+    {% for o in time_off %}
+    <tr><td>{{ o.start|date:"D M j g:i A" }} – {{ o.end|date:"D M j g:i A" }}</td><td class="small muted">{{ o.reason }}</td>
+      <td class="num"><form method="post" action="{% url 'timeoff_delete' o.pk %}" class="inline">{% csrf_token %}<button class="btn small secondary">Remove</button></form></td></tr>
+    {% empty %}<tr><td class="muted">No upcoming time off.</td></tr>{% endfor %}
+  </table></div>
+  <form method="post" class="card" style="margin-top:.6rem">{% csrf_token %}
+    {{ off_form.non_field_errors }}
+    <div class="form-grid">{{ off_form.as_div }}</div>
+    <p><button class="btn small" name="add_timeoff" value="1">Block time off</button></p>
+  </form>
+</div>
+</div>
+{% endblock %}

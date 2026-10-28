@@ -1,0 +1,80 @@
+{% extends "studio/base.html" %}
+{% block content %}
+{% with u=request.user %}
+<div class="cal-toolbar">
+  <div class="row">
+    <h1 style="margin:0">
+      {% if view == 'week' %}Week of {{ days.0|date:"M j" }}{% else %}{{ day|date:"l, F j" }}{% endif %}
+      {% if single_trainer and u.is_studio_admin %}· {{ single_trainer }}{% endif %}
+    </h1>
+  </div>
+  <div class="row">
+    <a class="btn secondary small" href="?view={{ view }}&date={{ prev|date:'Y-m-d' }}&trainer={{ trainer_param }}">←</a>
+    <a class="btn secondary small" href="?view={{ view }}&date={{ today|date:'Y-m-d' }}&trainer={{ trainer_param }}">Today</a>
+    <a class="btn secondary small" href="?view={{ view }}&date={{ next|date:'Y-m-d' }}&trainer={{ trainer_param }}">→</a>
+    <span class="chips" style="margin:0;padding:0">
+      <a class="chip {% if view == 'day' %}on{% endif %}" href="?view=day&date={{ day|date:'Y-m-d' }}&trainer={{ trainer_param }}">Day</a>
+      <a class="chip {% if view == 'week' %}on{% endif %}" href="?view=week&date={{ day|date:'Y-m-d' }}&trainer={{ trainer_param }}">Week</a>
+      {% if u.is_studio_admin and trainer_param %}<a class="chip" href="?view={{ view }}&date={{ day|date:'Y-m-d' }}">All trainers</a>{% endif %}
+    </span>
+    <a class="btn small" href="{% url 'staff_book' %}">+ 1:1 session</a>
+    <a class="btn small secondary" href="{% url 'group_new' %}">+ Small group</a>
+  </div>
+</div>
+
+{% if rows %}
+{# admin week view: trainers x days #}
+<div class="table-wrap">
+<table class="week">
+  <tr><th>Trainer</th>{% for d in days %}<th><a href="?view=day&date={{ d|date:'Y-m-d' }}">{{ d|date:"D M j" }}</a></th>{% endfor %}</tr>
+  {% for r in rows %}
+  <tr>
+    <td><a href="?view=week&date={{ day|date:'Y-m-d' }}&trainer={{ r.trainer.pk }}"><strong>{{ r.trainer }}</strong></a></td>
+    {% for c in r.cells %}
+    <td class="{% if c.off %}offcell{% endif %}">
+      {% if c.off %}<div class="muted small">Time off</div>{% endif %}
+      {% for e in c.events %}
+      <a class="evline" style="--c: {{ e.trainer.color }}" href="{% url 'event_detail' e.pk %}">
+        {{ e.start|date:"g:iA"|lower }} {% if e.kind == 'session' %}{% for b in e.seated %}{{ b.client.name }}{% empty %}{{ e.title }}{% endfor %}{% else %}{{ e.title }} <span class="muted">{{ e.n_booked }}/{{ e.capacity }}</span>{% endif %}
+      </a>
+      {% endfor %}
+    </td>
+    {% endfor %}
+  </tr>
+  {% endfor %}
+</table>
+</div>
+{% else %}
+{# time grid: trainers side by side (day) or one trainer's week #}
+<div class="cal">
+  <div class="hours">
+    <div class="head"></div>
+    <div class="body" style="height: {{ grid_height }}px">
+      {% for h in hours %}<div class="hour-label" style="top: {{ h.top }}px">{{ h.label }}</div>{% endfor %}
+    </div>
+  </div>
+  {% for col in columns %}
+  <div class="col">
+    <div class="head">{% if col.label_url %}<a href="{{ col.label_url }}">{{ col.label }}</a>{% else %}{{ col.label }}{% endif %}{% if col.sublabel %}<small>{{ col.sublabel }}</small>{% endif %}</div>
+    <div class="body" style="height: {{ grid_height }}px">
+      {% for h in hours %}<div class="hour-line" style="top: {{ h.top }}px"></div>{% endfor %}
+      {% for b in col.blocks %}
+        {% if b.url %}
+        <a class="blk {{ b.cls }}" href="{{ b.url }}" style="top: {{ b.top }}px; height: {{ b.height }}px; background-color: {{ b.color }}"><b>{{ b.title }}</b>{{ b.sub }}</a>
+        {% else %}
+        <div class="blk {{ b.cls }}" style="top: {{ b.top }}px; height: {{ b.height }}px">{% if b.title %}<b>{{ b.title }}</b>{{ b.sub }}{% endif %}</div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+<div class="legend">
+  <span style="--sw:#ecfdf5">Available for 1:1</span>
+  <span style="--sw:#e5e7eb">Time off</span>
+  <span style="--sw:#64748b">1:1 session (client name)</span>
+  <span style="--sw:#94a3b8">Class / small group (booked/capacity)</span>
+</div>
+{% endif %}
+{% endwith %}
+{% endblock %}

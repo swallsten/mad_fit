@@ -1,0 +1,28 @@
+{% extends "studio/base.html" %}
+{% block content %}
+<h1>Recurring classes</h1>
+<div class="table-wrap"><table>
+  <tr><th>Class</th><th>When</th><th>Trainer</th><th class="num">Length</th><th class="num">Capacity</th><th></th></tr>
+  {% for t in templates %}
+  <tr class="{% if not t.active %}muted{% endif %}">
+    <td><strong>{{ t.title }}</strong>{% if not t.active %} <span class="tag">paused</span>{% endif %}</td>
+    <td>{{ t.get_weekday_display }} {{ t.start_time|time:"g:i A" }}</td><td>{{ t.trainer }}</td>
+    <td class="num">{{ t.duration_minutes }} min</td><td class="num">{{ t.capacity }}</td>
+    <td class="num"><form method="post" action="{% url 'office_class_toggle' t.pk %}" class="inline">{% csrf_token %}<button class="btn small secondary">{% if t.active %}Pause{% else %}Resume{% endif %}</button></form></td>
+  </tr>
+  {% endfor %}
+</table></div>
+
+<form method="post" class="row" style="margin:.75rem 0">{% csrf_token %}
+  <select name="weeks" style="max-width:150px"><option value="2">2 weeks</option><option value="3" selected>3 weeks</option><option value="4">4 weeks</option><option value="8">8 weeks</option></select>
+  <button class="btn small secondary" name="generate" value="1">Schedule upcoming dates</button>
+  <span class="small muted">Creates any missing class dates. Safe to run more than once.</span>
+</form>
+
+<h2>Add a recurring class</h2>
+<form method="post" class="card">{% csrf_token %}
+  {{ form.non_field_errors }}
+  <div class="form-grid">{{ form.as_div }}</div>
+  <p><button class="btn small">Add class</button></p>
+</form>
+{% endblock %}

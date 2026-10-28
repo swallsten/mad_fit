@@ -1,0 +1,15 @@
+{% extends "studio/base.html" %}
+{% block main_class %}narrow{% endblock %}
+{% block content %}
+<h1>Book a 1:1 session</h1>
+{% if client.is_payment_flagged %}
+<div class="banner-bad">Bookings are paused because of a failed payment. <a href="{% url 'client_dashboard' %}">Fix it on your home page.</a></div>
+{% endif %}
+<p class="muted">
+  {% if balance.unlimited %}Your membership covers {{ balance.label|lower }}s.
+  {% else %}You have <strong>{{ balance.credits }}</strong> {{ balance.label|lower }} credit{{ balance.credits|pluralize }}.
+    {% if not balance.credits %}<a href="{% url 'client_buy' %}">Buy a package</a>{% endif %}
+  {% endif %}
+</p>
+{% include "studio/_slot_picker.html" with base_qs="" %}
+{% endblock %}

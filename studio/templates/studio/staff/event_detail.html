@@ -1,0 +1,65 @@
+{% extends "studio/base.html" %}
+{% block content %}
+<p><a href="{% url 'schedule' %}?date={{ event.start|date:'Y-m-d' }}">← Calendar</a></p>
+<div class="row between">
+  <h1>{{ event.title }}{% if event.is_cancelled %} <span class="tag bad">Cancelled</span>{% endif %}</h1>
+</div>
+<div class="card">
+  <div><strong>{{ event.start|date:"l, F j · g:i A" }}–{{ event.end|date:"g:i A" }}</strong></div>
+  <div>{{ event.get_kind_display }} with {{ event.trainer }}{% if event.kind != 'session' %} · {{ seated|length }}/{{ event.capacity }} booked · {{ waitlist|length }} waitlisted{% endif %}</div>
+  {% if late and not started %}<div class="small muted">Inside the {{ studio.late_cancel_hours }}h late-cancel window.</div>{% endif %}
+</div>
+
+<h2>Roster</h2>
+{% for b in seated %}
+<div class="item">
+  <div>
+    <div class="when"><a href="{% url 'client_detail' b.client.pk %}">{{ b.client }}</a> <span class="tag {% if b.status == 'no_show' %}bad{% elif b.status == 'attended' %}ok{% endif %}">{{ b.get_status_display }}</span></div>
+    <div class="meta">Paid with {{ b.paid_with }}</div>
+  </div>
+  <div class="row">
+    {% if started %}
+      <form method="post" action="{% url 'booking_attendance' b.pk %}" class="inline">{% csrf_token %}<button class="btn small {% if b.status != 'attended' %}secondary{% endif %}" name="status" value="attended">Attended</button></form>
+      <form method="post" action="{% url 'booking_attendance' b.pk %}" class="inline">{% csrf_token %}<button class="btn small {% if b.status == 'no_show' %}danger{% else %}secondary{% endif %}" name="status" value="no_show">No-show</button></form>
+    {% elif not event.is_cancelled %}
+      <a class="btn small secondary" href="{% url 'booking_cancel' b.pk %}">Cancel</a>
+    {% endif %}
+  </div>
+</div>
+{% empty %}<p class="muted">Nobody booked.</p>{% endfor %}
+
+{% if waitlist %}
+<h2>Waitlist</h2>
+{% for b in waitlist %}
+<div class="item">
+  <div><span class="when">#{{ forloop.counter }} <a href="{% url 'client_detail' b.client.pk %}">{{ b.client }}</a></span> <span class="meta">joined {{ b.created_at|date:"M j g:i A" }}</span></div>
+  {% if not started %}<a class="btn small secondary" href="{% url 'booking_cancel' b.pk %}">Remove</a>{% endif %}
+</div>
+{% endfor %}
+<p class="small muted">The first person is booked automatically when a spot opens (until {{ studio.waitlist_cutoff_hours }}h before start).</p>
+{% endif %}
+
+{% if clients and not started and not event.is_cancelled %}
+<h2>Add a client</h2>
+<form method="post" action="{% url 'event_add_client' event.pk %}" class="row">
+  {% csrf_token %}
+  <select name="client" style="max-width:320px">{% for c in clients %}<option value="{{ c.pk }}">{{ c }}</option>{% endfor %}</select>
+  <button class="btn small">Book</button>
+  <button class="btn small secondary" name="waitlist" value="1">Add to waitlist</button>
+</form>
+{% endif %}
+
+{% if other %}
+<h2>Cancelled / removed</h2>
+<div class="table-wrap"><table>
+  {% for b in other %}<tr><td>{{ b.client }}</td><td><span class="tag {% if b.status == 'late_cancel' %}bad{% endif %}">{{ b.get_status_display }}</span></td><td class="muted small">{{ b.cancelled_at|date:"M j g:i A" }} {{ b.note }}</td></tr>{% endfor %}
+</table></div>
+{% endif %}
+
+{% if not event.is_cancelled and not started %}
+<h2>Cancel {{ event.get_kind_display|lower }}</h2>
+<form method="post" action="{% url 'event_cancel' event.pk %}" onsubmit="return confirm('Cancel this for everyone and refund their credits?')">
+  {% csrf_token %}<button class="btn danger small">Cancel for everyone (refund all)</button>
+</form>
+{% endif %}
+{% endblock %}

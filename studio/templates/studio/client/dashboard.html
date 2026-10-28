@@ -1,0 +1,61 @@
+{% extends "studio/base.html" %}
+{% block main_class %}narrow{% endblock %}
+{% block content %}
+<h1>Hi, {{ client.user.first_name }}</h1>
+
+{% if client.is_payment_flagged %}
+<div class="banner-bad">
+  <strong>Payment problem.</strong> {{ client.payment_flag_reason }}
+  New bookings are paused until it's fixed.
+  <form method="post" action="{% url 'client_billing' %}" style="margin-top:.5rem">{% csrf_token %}<button class="btn danger small">Update card</button></form>
+</div>
+{% endif %}
+
+<h2>Your balance</h2>
+{% if balances %}
+<div class="cards">
+  {% for b in balances %}
+  <div class="stat">
+    <div class="n">{% if b.unlimited %}∞{% else %}{{ b.credits }}{% endif %}</div>
+    <div class="l">{{ b.label }}{% if not b.unlimited %} credit{{ b.credits|pluralize }}{% endif %}</div>
+    {% if b.next_expiry and not b.unlimited %}<div class="small muted">next expiry {{ b.next_expiry|date:"M j" }}</div>{% endif %}
+    {% if b.expired %}<div class="small" style="color:var(--bad)">{{ b.expired }} expired</div>{% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card">You don't have any credits yet. <a href="{% url 'client_buy' %}">Buy a package</a> to start booking.</div>
+{% endif %}
+
+{% for m in memberships %}
+<div class="item">
+  <div><div class="when">{{ m.product.name }}</div>
+    <div class="meta">{{ m.get_status_display }}{% if m.current_period_end %} · renews {{ m.current_period_end|date:"M j" }}{% endif %}</div></div>
+  {% if m.status == 'past_due' %}<span class="tag bad">Past due</span>{% else %}<span class="tag ok">{{ m.get_status_display }}</span>{% endif %}
+</div>
+{% endfor %}
+
+<div class="row" style="margin:1rem 0">
+  <a class="btn" href="{% url 'client_book' %}">Book a session</a>
+  <a class="btn secondary" href="{% url 'client_classes' %}">Class schedule</a>
+  <a class="btn secondary" href="{% url 'client_buy' %}">Buy</a>
+  <form method="post" action="{% url 'client_billing' %}" class="inline">{% csrf_token %}<button class="btn secondary">Billing &amp; card</button></form>
+</div>
+
+<h2>Upcoming</h2>
+{% for b in upcoming %}
+<div class="item">
+  <div>
+    <div class="when">{{ b.event.start|date:"D M j, g:i A" }}</div>
+    <div>{{ b.event.title }} with {{ b.event.trainer }}</div>
+    <div class="meta">
+      {% if b.status == 'waitlisted' %}<span class="tag warn">Waitlist #{{ b.waitlist_position }}</span>{% else %}Paid with {{ b.paid_with }}{% endif %}
+    </div>
+  </div>
+  <a class="btn secondary small" href="{% url 'booking_cancel' b.pk %}">{% if b.status == 'waitlisted' %}Leave waitlist{% else %}Cancel{% endif %}</a>
+</div>
+{% empty %}
+<p class="muted">Nothing booked yet.</p>
+{% endfor %}
+<p class="small muted">Cancellation policy: cancel at least {{ studio.late_cancel_hours }} hours ahead to get your credit back. Late cancels and no-shows use the credit.</p>
+{% endblock %}

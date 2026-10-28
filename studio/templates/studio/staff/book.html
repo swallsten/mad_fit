@@ -1,0 +1,53 @@
+{% extends "studio/base.html" %}
+{% block main_class %}narrow{% endblock %}
+{% block content %}
+<h1>Book a 1:1 session</h1>
+<form method="get" class="row" style="margin-bottom:.5rem">
+  <select name="client" onchange="this.form.submit()" style="max-width:340px">
+    <option value="">— Choose client —</option>
+    {% for c in clients %}<option value="{{ c.pk }}" {% if c == client %}selected{% endif %}>{{ c }}{% if c.is_payment_flagged %} (payment failed){% endif %}</option>{% endfor %}
+  </select>
+  <input type="hidden" name="duration" value="{{ duration }}">
+  {% if trainer %}<input type="hidden" name="trainer" value="{{ trainer.pk }}">{% endif %}
+  <input type="hidden" name="date" value="{{ day|date:'Y-m-d' }}">
+</form>
+
+{% if client %}
+<p class="muted small">
+  {{ client }} has: {% for k, b in balances.items %}{% if b.unlimited %}unlimited {{ b.label|lower }}s{% else %}{{ b.credits }} × {{ b.label|lower }}{% endif %}{% if not forloop.last %} · {% endif %}{% endfor %}
+</p>
+{% if client.is_payment_flagged %}<div class="banner-bad">{{ client }} has a failed payment — new bookings are blocked until it's resolved.</div>{% endif %}
+
+<h3>Session length</h3>
+<div class="chips">
+  {% for d, label in durations %}<a class="chip {% if d == duration %}on{% endif %}" href="?client={{ client.pk }}&duration={{ d }}{% if trainer %}&trainer={{ trainer.pk }}{% endif %}&date={{ day|date:'Y-m-d' }}">{{ label }}</a>{% endfor %}
+</div>
+<h3>Trainer</h3>
+<div class="chips">
+  {% for t in trainers %}<a class="chip {% if t == trainer %}on{% endif %}" href="?client={{ client.pk }}&duration={{ duration }}&trainer={{ t.pk }}&date={{ day|date:'Y-m-d' }}">{{ t }}</a>{% endfor %}
+</div>
+{% if trainer %}
+<h3>Day</h3>
+<div class="chips">
+  {% for d in days %}<a class="chip day-chip {% if d == day %}on{% endif %}" href="?client={{ client.pk }}&duration={{ duration }}&trainer={{ trainer.pk }}&date={{ d|date:'Y-m-d' }}"><b>{{ d|date:"D" }}</b>{{ d|date:"M j" }}</a>{% endfor %}
+</div>
+<h3>Open times · {{ day|date:"l, F j" }}</h3>
+<form method="post">
+  {% csrf_token %}
+  <input type="hidden" name="client" value="{{ client.pk }}">
+  <input type="hidden" name="trainer" value="{{ trainer.pk }}">
+  <input type="hidden" name="duration" value="{{ duration }}">
+  {% if slots %}
+  <div class="slots">{% for s in slots %}<button class="btn secondary" name="start" value="{{ s|date:'c' }}">{{ s|date:"g:i A" }}</button>{% endfor %}</div>
+  {% else %}<p class="muted">No open slots in {{ trainer }}'s posted availability this day.</p>{% endif %}
+  <h3>Or any other time (staff override)</h3>
+  <div class="row">
+    <input type="datetime-local" name="start" id="custom-start" style="max-width:240px" disabled>
+    <label class="small" style="margin:0"><input type="checkbox" onchange="document.getElementById('custom-start').disabled=!this.checked; document.getElementById('custom-btn').disabled=!this.checked"> use a custom time</label>
+    <button class="btn small" id="custom-btn" disabled>Book custom time</button>
+  </div>
+  <p class="small muted">Staff can book outside posted availability, but never on top of another booking or during time off.</p>
+</form>
+{% endif %}
+{% endif %}
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends "studio/base.html" %}
+{% block main_class %}narrow{% endblock %}
+{% block content %}
+<h1>History</h1>
+<h2>Packages</h2>
+<div class="table-wrap"><table>
+  <tr><th>Package</th><th class="num">Left</th><th>Bought</th><th>Expires</th></tr>
+  {% for p in packages %}
+  <tr><td>{{ p.name }}</td><td class="num">{{ p.credits_remaining }}/{{ p.credits_total }}</td><td>{{ p.purchased_at|date:"M j, Y" }}</td>
+    <td>{% if p.expires_at %}{{ p.expires_at|date:"M j, Y" }}{% if p.expires_at < now %} <span class="tag bad">expired</span>{% endif %}{% else %}—{% endif %}</td></tr>
+  {% empty %}<tr><td colspan="4" class="muted">None yet.</td></tr>{% endfor %}
+</table></div>
+
+<h2>Sessions &amp; classes</h2>
+<div class="table-wrap"><table>
+  <tr><th>When</th><th>What</th><th>Status</th></tr>
+  {% for b in past %}
+  <tr><td>{{ b.event.start|date:"M j, g:i A" }}</td><td>{{ b.event.title }} · {{ b.event.trainer }}</td>
+    <td><span class="tag {% if b.status == 'late_cancel' or b.status == 'no_show' %}bad{% elif b.status == 'attended' %}ok{% endif %}">{{ b.get_status_display }}</span></td></tr>
+  {% empty %}<tr><td colspan="3" class="muted">Nothing yet.</td></tr>{% endfor %}
+</table></div>
+
+<h2>Credit activity</h2>
+<div class="table-wrap"><table>
+  <tr><th>Date</th><th>Change</th><th>Package</th><th>Reason</th></tr>
+  {% for t in ledger %}
+  <tr><td>{{ t.created_at|date:"M j, Y" }}</td><td class="num">{% if t.delta > 0 %}+{% endif %}{{ t.delta }}</td><td>{{ t.package.name }}</td>
+    <td>{{ t.get_reason_display }}{% if t.booking %} · {{ t.booking.event.start|date:"M j" }}{% endif %}</td></tr>
+  {% empty %}<tr><td colspan="4" class="muted">No activity.</td></tr>{% endfor %}
+</table></div>
+{% endblock %}
